@@ -1,0 +1,69 @@
+package amnesia
+
+import (
+	"crypto/rand"
+	"encoding/base64"
+	"encoding/json"
+	"io"
+
+	"golang.org/x/crypto/argon2"
+)
+
+var encoding = base64.StdEncoding
+
+type QuestionsAndAnswers map[string]string
+
+type Share struct {
+	Question string `json:"question"`
+	Salt     string `json:"salt"`
+	Share    string `json:"share"`
+}
+
+type SealedSecret struct {
+	Version    string  `json:"version"`
+	Compressed bool    `json:"compressed"`
+	Shares     []Share `json:"shares"`
+}
+
+type Options struct {
+	compress bool
+}
+
+type Option func(*Options)
+
+func WithCompression() Option {
+	return func(o *Options) {
+		o.compress = true
+	}
+}
+
+func kdf(password, salt []byte) []byte {
+	const (
+		time    = uint32(5)
+		memory  = uint32(64 * 1024) // 64MiB (unit is KiB)
+		threads = uint8(4)
+		keyLen  = uint32(32)
+	)
+
+	return argon2.IDKey(password, salt, time, memory, threads, keyLen)
+}
+
+func salt(length int) []byte {
+	salt := make([]byte, length)
+
+	if _, err := io.ReadFull(rand.Reader, salt); err != nil {
+		panic(err)
+	}
+
+	return salt
+}
+
+func Decode(buf []byte) (*SealedSecret, error) {
+	var sf SealedSecret
+
+	if err := json.Unmarshal(buf, &sf); err != nil {
+		return nil, err
+	}
+
+	return &sf, nil
+}

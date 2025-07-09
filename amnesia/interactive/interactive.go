@@ -59,7 +59,15 @@ func Unseal(ctx context.Context, sealed []byte, _ ...Option) ([]byte, error) {
 			return nil, err
 		}
 
+		if answer == "" {
+			continue
+		}
+
 		answers[share.Question] = answer
+	}
+
+	if len(answers) < 2 {
+		return nil, fmt.Errorf("at least two answers are required")
 	}
 
 	return amnesia.Unseal(sealed, answers)
@@ -91,7 +99,7 @@ func promptForQuestions(ctx context.Context) (map[string]string, error) {
 				Value(answer).
 				Validate(func(s string) error {
 					if s == "" {
-						return fmt.Errorf("string cannot be empty")
+						return fmt.Errorf("answer cannot be empty")
 					}
 					return nil
 				}),

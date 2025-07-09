@@ -48,7 +48,7 @@ func (s *sealCmd) Run(ctx *kong.Context) error {
 
 	sealed, err := interactive.Seal(context.Background(), data, opts...)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to seal secret: %w", err)
 	}
 
 	if s.File != "" {

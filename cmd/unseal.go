@@ -44,7 +44,7 @@ func (s *unsealCmd) Run(ctx *kong.Context) error {
 
 	unsealed, err := interactive.Unseal(context.Background(), input)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to unseal secret: %w", err)
 	}
 
 	if s.OutputFile != "" {

@@ -114,7 +114,7 @@ func unsealV1(sealedSecret *SealedSecret, answers map[string]string) ([]byte, er
 
 	secret, err := decryptData(sealedSecret.Encrypted, dekKey)
 	if err != nil {
-		return nil, fmt.Errorf("error decrypting data (incorrect or too few answers?): %w", err)
+		return nil, fmt.Errorf("error decrypting data (incorrect or too few answers?)")
 	}
 
 	return secret, nil

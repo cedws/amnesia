@@ -1,32 +1,14 @@
 package amnesia
 
 import (
-	"bytes"
-	"compress/gzip"
 	"crypto/aes"
 	"crypto/cipher"
-	"crypto/sha256"
 	"fmt"
-	"io"
 
 	"github.com/hashicorp/vault/shamir"
 )
 
-func decompressData(data []byte) ([]byte, error) {
-	reader, err := gzip.NewReader(bytes.NewReader(data))
-	if err != nil {
-		return nil, err
-	}
-	defer reader.Close()
-
-	var buf bytes.Buffer
-	if _, err := io.Copy(&buf, reader); err != nil {
-		return nil, err
-	}
-
-	return buf.Bytes(), nil
-}
-
+// decryptShare decrypts a share of the DEK with AES-CTR
 func decryptShare(data []byte, key []byte) ([]byte, error) {
 	if len(data) < aes.BlockSize {
 		return nil, fmt.Errorf("ciphertext too short")
@@ -47,33 +29,35 @@ func decryptShare(data []byte, key []byte) ([]byte, error) {
 	return plaintext, nil
 }
 
-func joinSecret(shares [][]byte, compressed bool) ([]byte, error) {
-	joined, err := shamir.Combine(shares)
+// decryptData decrypts the data with AES-GCM using the DEK
+func decryptData(data []byte, key []byte) ([]byte, error) {
+	if len(data) < aes.BlockSize {
+		return nil, fmt.Errorf("ciphertext too short")
+	}
+
+	block, err := aes.NewCipher(key[:32])
 	if err != nil {
 		return nil, err
 	}
 
-	if len(joined) < sha256.Size {
-		panic("decrypted share too short")
+	aesgcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return nil, err
 	}
 
-	data := joined[:len(joined)-sha256.Size]
-	hash := joined[len(joined)-sha256.Size:]
-
-	actual := sha256.Sum256(data)
-	if !bytes.Equal(actual[:], hash) {
-		return nil, fmt.Errorf("failed to decrypt secret (wrong answers or not enough correct?)")
+	if len(data) < aesgcm.NonceSize() {
+		return nil, fmt.Errorf("ciphertext too short")
 	}
 
-	if compressed {
-		var err error
-		data, err = decompressData(data)
-		if err != nil {
-			return nil, err
-		}
+	nonce := data[:aesgcm.NonceSize()]
+	ciphertext := data[aesgcm.NonceSize():]
+
+	plaintext, err := aesgcm.Open(nil, nonce, ciphertext, nil)
+	if err != nil {
+		return nil, err
 	}
 
-	return data, nil
+	return plaintext, nil
 }
 
 func Unseal(input []byte, answers map[string]string) ([]byte, error) {
@@ -90,10 +74,10 @@ func Unseal(input []byte, answers map[string]string) ([]byte, error) {
 	}
 }
 
-func unsealV1(sealFile *SealedSecret, answers map[string]string) ([]byte, error) {
+func unsealV1(sealedSecret *SealedSecret, answers map[string]string) ([]byte, error) {
 	var shares [][]byte
 
-	for _, encryptedShare := range sealFile.Shares {
+	for _, encryptedShare := range sealedSecret.Shares {
 		answer, ok := answers[encryptedShare.Question]
 		if !ok {
 			// Missing answer, skip decrypting this share
@@ -123,10 +107,15 @@ func unsealV1(sealFile *SealedSecret, answers map[string]string) ([]byte, error)
 		shares = append(shares, decryptedShare)
 	}
 
-	buf, err := joinSecret(shares, sealFile.Compressed)
+	dekKey, err := shamir.Combine(shares)
 	if err != nil {
 		return nil, fmt.Errorf("error joining shares: %w", err)
 	}
 
-	return buf, nil
+	secret, err := decryptData(sealedSecret.Encrypted, dekKey)
+	if err != nil {
+		return nil, fmt.Errorf("error decrypting data (incorrect or too few answers?): %w", err)
+	}
+
+	return secret, nil
 }

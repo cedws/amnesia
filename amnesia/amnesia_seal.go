@@ -1,34 +1,16 @@
 package amnesia
 
 import (
-	"bytes"
-	"compress/gzip"
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
-	"crypto/sha256"
 	"encoding/json"
-	"fmt"
 
 	"github.com/hashicorp/vault/shamir"
 )
 
-func compressData(data []byte) ([]byte, error) {
-	var buf bytes.Buffer
-	writer := gzip.NewWriter(&buf)
-
-	if _, err := writer.Write(data); err != nil {
-		return nil, err
-	}
-
-	if err := writer.Close(); err != nil {
-		return nil, err
-	}
-
-	return buf.Bytes(), nil
-}
-
-func encryptShare(data []byte, key []byte) []byte {
+// encryptShare encrypts a share of the DEK with AES-CTR
+func encryptShare(data, key []byte) []byte {
 	block, err := aes.NewCipher(key[:32])
 	if err != nil {
 		panic(err)
@@ -50,83 +32,74 @@ func encryptShare(data []byte, key []byte) []byte {
 	return result
 }
 
-func splitSecret(
-	data []byte,
-	parts,
-	threshold int,
-	compress bool,
-) ([][]byte, error) {
-	if compress {
-		var err error
-		data, err = compressData(data)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	secretHash := sha256.Sum256(data)
-	data = append(data, secretHash[:]...)
-
-	shares, err := shamir.Split(data, parts, threshold)
+// encryptData encrypts data with AES-GCM using the DEK
+func encryptData(data []byte, key []byte) []byte {
+	block, err := aes.NewCipher(key[:32])
 	if err != nil {
 		panic(err)
 	}
 
-	return shares, nil
+	gcm, err := cipher.NewGCM(block)
+	if err != nil {
+		panic(err)
+	}
+
+	nonce := make([]byte, gcm.NonceSize())
+	if _, err := rand.Read(nonce); err != nil {
+		panic(err)
+	}
+
+	ciphertext := gcm.Seal(nil, nonce, data, nil)
+
+	result := make([]byte, 0, len(nonce)+len(ciphertext))
+	result = append(result, nonce...)
+	result = append(result, ciphertext...)
+
+	return result
 }
 
 func Seal(
 	secret []byte,
 	answers map[string]string,
 	threshold int,
-	opts ...Option,
 ) ([]byte, error) {
-	var options Options
-	for _, opt := range opts {
-		opt(&options)
-	}
-
-	shares, err := splitSecret(secret, len(answers), threshold, options.compress)
-	if err != nil {
-		return nil, err
-	}
-
-	sealedData, err := sealV1(answers, shares, options.compress)
-	if err != nil {
-		return nil, err
-	}
-
-	return sealedData, nil
+	return sealV1(secret, answers, threshold)
 }
 
 func sealV1(
+	secret []byte,
 	answers map[string]string,
-	shares [][]byte,
-	compressed bool,
+	threshold int,
 ) ([]byte, error) {
-	sealFile := SealedSecret{
-		Version:    "1",
-		Compressed: compressed,
-		Shares:     make([]Share, 0, len(answers)),
+	sealedSecret := SealedSecret{
+		Version: "1",
+		Shares:  make([]Share, 0, len(answers)),
+	}
+
+	// DEK encryption key for secret
+	dekKey := random(32)
+	sealedSecret.Encrypted = encryptData(secret, dekKey)
+
+	// Split DEK encryption key into shares
+	shares, err := shamir.Split(dekKey, len(answers), threshold)
+	if err != nil {
+		return nil, err
 	}
 
 	for question, answer := range answers {
-		idx := len(sealFile.Shares)
+		idx := len(sealedSecret.Shares)
 
-		salt := salt(32)
-		key := kdf([]byte(answer), salt)
-		encryptedShare := encryptShare(shares[idx], key)
+		// Encryption key/kekSalt for KEK share
+		kekSalt := random(32)
+		kekKey := kdf([]byte(answer), kekSalt)
+		encryptedShare := encryptShare(shares[idx], kekKey)
 
-		sealFile.Shares = append(sealFile.Shares, Share{
+		sealedSecret.Shares = append(sealedSecret.Shares, Share{
 			Question: question,
-			Salt:     encoding.EncodeToString(salt),
+			Salt:     encoding.EncodeToString(kekSalt),
 			Share:    encoding.EncodeToString(encryptedShare),
 		})
 	}
 
-	if len(sealFile.Shares) != len(answers) {
-		panic(fmt.Errorf("expected to produce %d shares, got %d", len(answers), len(sealFile.Shares)))
-	}
-
-	return json.MarshalIndent(sealFile, "", "  ")
+	return json.MarshalIndent(sealedSecret, "", "  ")
 }

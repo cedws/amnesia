@@ -10,16 +10,9 @@ import (
 
 type options struct {
 	testQuestions bool
-	sealOpts      []amnesia.Option
 }
 
 type Option func(*options)
-
-func WithSealOptions(sealOpts ...amnesia.Option) Option {
-	return func(o *options) {
-		o.sealOpts = sealOpts
-	}
-}
 
 func WithTestQuestions() Option {
 	return func(o *options) {
@@ -49,7 +42,7 @@ func Seal(ctx context.Context, secret []byte, opts ...Option) ([]byte, error) {
 		return nil, err
 	}
 
-	return amnesia.Seal(secret, questions, threshold, options.sealOpts...)
+	return amnesia.Seal(secret, questions, threshold)
 }
 
 func Unseal(ctx context.Context, sealed []byte, _ ...Option) ([]byte, error) {

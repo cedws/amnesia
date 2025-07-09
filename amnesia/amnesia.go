@@ -11,8 +11,6 @@ import (
 
 var encoding = base64.StdEncoding
 
-type QuestionsAndAnswers map[string]string
-
 type Share struct {
 	Question string `json:"question"`
 	Salt     string `json:"salt"`
@@ -20,21 +18,9 @@ type Share struct {
 }
 
 type SealedSecret struct {
-	Version    string  `json:"version"`
-	Compressed bool    `json:"compressed"`
-	Shares     []Share `json:"shares"`
-}
-
-type Options struct {
-	compress bool
-}
-
-type Option func(*Options)
-
-func WithCompression() Option {
-	return func(o *Options) {
-		o.compress = true
-	}
+	Version   string  `json:"version"`
+	Shares    []Share `json:"shares"`
+	Encrypted []byte  `json:"encrypted"`
 }
 
 func kdf(password, salt []byte) []byte {
@@ -48,7 +34,7 @@ func kdf(password, salt []byte) []byte {
 	return argon2.IDKey(password, salt, time, memory, threads, keyLen)
 }
 
-func salt(length int) []byte {
+func random(length int) []byte {
 	salt := make([]byte, length)
 
 	if _, err := io.ReadFull(rand.Reader, salt); err != nil {

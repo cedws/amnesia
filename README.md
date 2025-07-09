@@ -24,45 +24,23 @@ echo "my-master-password" | amnesia seal -f secret.json
 amnesia unseal -f secret.json
 ```
 
-### More examples
-```bash
-# Seal SSH key without compression
-cat ~/.ssh/id_rsa | amnesia seal --no-compress -f ssh-key.json
-
-# Unseal to file
-amnesia unseal -f sealed.json -o recovered.txt
-```
-
 ## Cryptography
 
-The cryptography behind amnesia is argon2id, AES-CTR, and [Shamir's Secret Sharing](https://en.wikipedia.org/wiki/Shamir%27s_secret_sharing).
+The cryptography used in amnesia is argon2id, AES-CTR, AES-GCM and [Shamir's Secret Sharing](https://en.wikipedia.org/wiki/Shamir%27s_secret_sharing).
 
-Upon encryption:
+1. A 32 byte DEK (data encryption key) is generated
+2. The DEK is split into M shares using Shamir's Secret Sharing, where M is the number of questions
+3. A 32 byte KEK (key encryption key) is derived from each answer using argon2id KDF
+4. Each share of the DEK is encrypted with an answer KEK using AES-CTR
+5. The encrypted shares are stored alongside the corresponding questions
+6. The secret is encrypted with the DEK using AES-GCM
 
-1. The secret is optionally compressed with gzip (default behaviour)
-2. A SHA256 hash is appended to the secret for integrity verification
-3. The secret is split into M shares using Shamir's Secret Sharing, where M is the number of questions
-4. An encryption key is derived from each answer using argon2id key derivation function
-5. Each share is encrypted with its corresponding key using AES-CTR
-6. The encrypted shares are stored alongside their corresponding questions
-
-The size of the sealed secret roughly scales like the following:
-
-```
-Total Output Size = M × (N + O)
-```
-
-Where:
-- **N** = secret size in bytes
-- **M** = number of shares (questions)
-- **O** = overhead per share (typically 1-10 bytes)
-
-Shares are encrypted with AES-CTR, an unauthenticated cipher, to make shares more difficult to brute force. Integrity of the resulting secret is ensured with the trailing SHA256 checksum.
+This hybrid method of encrypting a secret with a DEK and splitting the DEK into parts with SSS means very large secrets can be protected with minimal overhead.
 
 For strong protection of the secret, enter a good number of difficult questions. An example usage could be to enter your last five passwords as questions.
 
 > [!WARNING]
-> *amnesia* has not been cryptographically audited, use at your own risk.
+> amnesia has not been cryptographically audited, use at your own risk.
 > If you're interested in helping out with this, please get in touch.
 
 ## Inspiration

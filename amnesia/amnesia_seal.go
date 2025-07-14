@@ -61,21 +61,25 @@ func encryptData(data []byte, key []byte) []byte {
 
 func Seal(
 	secret []byte,
-	answers map[string]string,
+	questions Questions,
 	threshold int,
 ) ([]byte, error) {
-	return sealV1(secret, answers, threshold)
+	if err := questions.Validate(); err != nil {
+		return nil, err
+	}
+
+	return sealV1(secret, questions, threshold)
 }
 
 func sealV1(
 	secret []byte,
-	answers map[string]string,
+	questions Questions,
 	threshold int,
 ) ([]byte, error) {
 	sealedSecret := SealedSecret{
 		Version:         "1",
 		SealedTimestamp: time.Now().Format(time.RFC3339),
-		Shares:          make([]Share, 0, len(answers)),
+		Shares:          make([]Share, 0, len(questions)),
 	}
 
 	// DEK encryption key for secret
@@ -83,21 +87,22 @@ func sealV1(
 	sealedSecret.Encrypted = encryptData(secret, dekKey)
 
 	// Split DEK encryption key into shares
-	shares, err := shamir.Split(dekKey, len(answers), threshold)
+	shares, err := shamir.Split(dekKey, len(questions), threshold)
 	if err != nil {
 		return nil, err
 	}
 
-	for question, answer := range answers {
+	for id, question := range questions {
 		idx := len(sealedSecret.Shares)
 
-		// Encryption key/kekSalt for KEK share
+		// Encryption key/salt for KEK share
 		kekSalt := random(32)
-		kekKey := kdf([]byte(answer), kekSalt)
+		kekKey := kdf([]byte(question.Answer), kekSalt)
 		encryptedShare := encryptShare(shares[idx], kekKey)
 
 		sealedSecret.Shares = append(sealedSecret.Shares, Share{
-			Question: question,
+			ID:       id,
+			Question: question.Question,
 			Salt:     encoding.EncodeToString(kekSalt),
 			Share:    encoding.EncodeToString(encryptedShare),
 		})

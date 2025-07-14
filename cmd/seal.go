@@ -52,7 +52,7 @@ func (s *sealCmd) Run(ctx *kong.Context) error {
 	}
 
 	if s.File != "" {
-		if err := os.WriteFile(s.File, sealed, 0644); err != nil {
+		if err := os.WriteFile(s.File, sealed, 0600); err != nil {
 			return err
 		}
 

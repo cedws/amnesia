@@ -48,7 +48,7 @@ func (s *unsealCmd) Run(ctx *kong.Context) error {
 	}
 
 	if s.OutputFile != "" {
-		if err = os.WriteFile(s.OutputFile, unsealed, 0644); err != nil {
+		if err := os.WriteFile(s.OutputFile, unsealed, 0600); err != nil {
 			return err
 		}
 

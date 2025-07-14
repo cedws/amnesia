@@ -34,6 +34,10 @@ amnesia unseal -f sealed.json
 amnesia unseal -f sealed.json -o secret.json
 ```
 
+For strong protection of the secret, enter a good number of difficult questions. An example usage could be to enter your last five passwords as questions.
+
+Answers are used verbatim in key-derivation, so be mindful of usage of casing and punctuation.
+
 ## Cryptography
 
 > [!WARNING]
@@ -50,5 +54,3 @@ The cryptography used in amnesia is argon2id, AES-CTR, AES-GCM and [Shamir's Sec
 6. The secret is encrypted with the DEK using AES-GCM
 
 This hybrid method of encrypting a secret with a DEK and splitting the DEK into parts with SSS means very large secrets can be protected with minimal overhead.
-
-For strong protection of the secret, enter a good number of difficult questions. An example usage could be to enter your last five passwords as questions.

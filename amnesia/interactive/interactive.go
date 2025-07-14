@@ -51,30 +51,29 @@ func Unseal(ctx context.Context, sealed []byte, _ ...Option) ([]byte, error) {
 		return nil, err
 	}
 
-	answers := make(map[string]string)
+	answers := amnesia.NewAnswers()
 
 	for _, share := range decoded.Shares {
 		answer, err := promptForAnswer(ctx, share.Question)
 		if err != nil {
 			return nil, err
 		}
-
 		if answer == "" {
 			continue
 		}
 
-		answers[share.Question] = answer
-	}
+		if _, ok := answers[share.ID]; ok {
+			return nil, fmt.Errorf("duplicate share id %d", share.ID)
+		}
 
-	if len(answers) < 2 {
-		return nil, fmt.Errorf("at least two answers are required")
+		answers[share.ID] = answer
 	}
 
 	return amnesia.Unseal(sealed, answers)
 }
 
-func promptForQuestions(ctx context.Context) (map[string]string, error) {
-	questions := make(map[string]string)
+func promptForQuestions(ctx context.Context) (amnesia.Questions, error) {
+	questions := amnesia.NewQuestions()
 	cont := true
 
 	newGroup := func(question, answer *string) *huh.Group {
@@ -87,7 +86,7 @@ func promptForQuestions(ctx context.Context) (map[string]string, error) {
 					if s == "" {
 						return fmt.Errorf("string cannot be empty")
 					}
-					if _, ok := questions[*question]; ok {
+					if ok := questions.Contains(*question); ok {
 						return fmt.Errorf("question already set")
 					}
 					return nil
@@ -107,8 +106,8 @@ func promptForQuestions(ctx context.Context) (map[string]string, error) {
 				Title("Enter another question?").
 				Value(&cont).
 				Validate(func(b bool) error {
-					// < 1 because question hasn't been added yet
-					if !b && len(questions) < 1 {
+					// -1 because question hasn't been added yet
+					if !b && len(questions) < amnesia.MinQuestions-1 {
 						return fmt.Errorf("at least two questions are required")
 					}
 					return nil
@@ -127,26 +126,29 @@ func promptForQuestions(ctx context.Context) (map[string]string, error) {
 			return nil, err
 		}
 
-		questions[question] = answer
+		questions.Set(len(questions), amnesia.Question{
+			Question: question,
+			Answer:   answer,
+		})
 
-		if len(questions) >= 256 {
-			return nil, fmt.Errorf("too many questions, must be fewer than 256")
+		if len(questions) == amnesia.MaxQuestions {
+			break
 		}
 	}
 
 	return questions, nil
 }
 
-func promptForTestQuestions(ctx context.Context, answers map[string]string) error {
+func promptForTestQuestions(ctx context.Context, questions amnesia.Questions) error {
 	var fields []huh.Field
 
-	for question, answer := range answers {
+	for _, question := range questions {
 		fields = append(fields, huh.NewInput().
-			Title(fmt.Sprintf("Test question: %s", question)).
+			Title(fmt.Sprintf("Test question: %s", question.Question)).
 			Description("Enter the answer to the test question").
 			EchoMode(huh.EchoModePassword).
 			Validate(func(s string) error {
-				if s != answer {
+				if s != question.Answer {
 					return fmt.Errorf("incorrect answer")
 				}
 				return nil
@@ -170,7 +172,7 @@ func promptForThreshold(ctx context.Context, numQuestions int) (int, error) {
 	var options []int
 	var threshold int
 
-	for i := 2; i <= numQuestions; i++ {
+	for i := amnesia.MinQuestions; i <= numQuestions; i++ {
 		options = append(options, i)
 	}
 

@@ -60,7 +60,11 @@ func decryptData(data []byte, key []byte) ([]byte, error) {
 	return plaintext, nil
 }
 
-func Unseal(input []byte, answers map[string]string) ([]byte, error) {
+func Unseal(input []byte, answers Answers) ([]byte, error) {
+	if err := answers.Validate(); err != nil {
+		return nil, err
+	}
+
 	sealed, err := Decode(input)
 	if err != nil {
 		return nil, err
@@ -74,11 +78,11 @@ func Unseal(input []byte, answers map[string]string) ([]byte, error) {
 	}
 }
 
-func unsealV1(sealedSecret *SealedSecret, answers map[string]string) ([]byte, error) {
+func unsealV1(sealedSecret *SealedSecret, answers Answers) ([]byte, error) {
 	var shares [][]byte
 
-	for _, encryptedShare := range sealedSecret.Shares {
-		answer, ok := answers[encryptedShare.Question]
+	for _, share := range sealedSecret.Shares {
+		answer, ok := answers[share.ID]
 		if !ok {
 			// Missing answer, skip decrypting this share
 			continue
@@ -88,12 +92,12 @@ func unsealV1(sealedSecret *SealedSecret, answers map[string]string) ([]byte, er
 			continue
 		}
 
-		salt, err := encoding.DecodeString(encryptedShare.Salt)
+		salt, err := encoding.DecodeString(share.Salt)
 		if err != nil {
 			return nil, err
 		}
 
-		ciphertext, err := encoding.DecodeString(encryptedShare.Share)
+		ciphertext, err := encoding.DecodeString(share.Share)
 		if err != nil {
 			return nil, err
 		}

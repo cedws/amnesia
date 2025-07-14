@@ -18,9 +18,10 @@ type Share struct {
 }
 
 type SealedSecret struct {
-	Version   string  `json:"version"`
-	Shares    []Share `json:"shares"`
-	Encrypted []byte  `json:"encrypted"`
+	Version         string  `json:"version"`
+	SealedTimestamp string  `json:"sealed_timestamp"`
+	Shares          []Share `json:"shares"`
+	Encrypted       []byte  `json:"encrypted"`
 }
 
 func kdf(password, salt []byte) []byte {

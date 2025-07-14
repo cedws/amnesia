@@ -5,6 +5,7 @@ import (
 	"crypto/cipher"
 	"crypto/rand"
 	"encoding/json"
+	"time"
 
 	"github.com/hashicorp/vault/shamir"
 )
@@ -72,8 +73,9 @@ func sealV1(
 	threshold int,
 ) ([]byte, error) {
 	sealedSecret := SealedSecret{
-		Version: "1",
-		Shares:  make([]Share, 0, len(answers)),
+		Version:         "1",
+		SealedTimestamp: time.Now().Format(time.RFC3339),
+		Shares:          make([]Share, 0, len(answers)),
 	}
 
 	// DEK encryption key for secret

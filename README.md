@@ -8,6 +8,10 @@ I've been thinking about how I would recover my digital life if I suffered from 
 
 Upon sealing a secret, the user is asked to provide a set of questions and answers, and a threshold. The threshold is the number of questions that must be answered correctly to unseal the secret, and must be at least 2. The user is prompted with test questions before sealing the secret to ensure they have been inputted correctly.
 
+## Demo
+
+![Demo](docs/amnesia.gif)
+
 ## Installation
 
 ```bash

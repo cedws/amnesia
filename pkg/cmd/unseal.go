@@ -7,7 +7,7 @@ import (
 	"os"
 
 	"github.com/alecthomas/kong"
-	"github.com/cedws/amnesia/amnesia/interactive"
+	"github.com/cedws/amnesia/pkg/amnesia/interactive"
 	"github.com/charmbracelet/x/term"
 )
 

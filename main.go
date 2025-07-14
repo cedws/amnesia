@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/cedws/amnesia/cmd"
+	"github.com/cedws/amnesia/pkg/cmd"
 )
 
 func main() {

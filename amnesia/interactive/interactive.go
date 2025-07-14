@@ -37,7 +37,7 @@ func Seal(ctx context.Context, secret []byte, opts ...Option) ([]byte, error) {
 		}
 	}
 
-	threshold, err := promptThreshold(ctx, len(questions))
+	threshold, err := promptForThreshold(ctx, len(questions))
 	if err != nil {
 		return nil, err
 	}
@@ -166,7 +166,7 @@ func promptForTestQuestions(ctx context.Context, answers map[string]string) erro
 	return nil
 }
 
-func promptThreshold(ctx context.Context, numQuestions int) (int, error) {
+func promptForThreshold(ctx context.Context, numQuestions int) (int, error) {
 	var options []int
 	var threshold int
 

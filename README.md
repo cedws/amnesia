@@ -42,6 +42,51 @@ For strong protection of the secret, enter a good number of difficult questions.
 
 Answers are used verbatim in key-derivation, so be mindful of usage of casing and punctuation.
 
+## age Plugin (experimental)
+
+amnesia has experimental support for [age](https://github.com/FiloSottile/age) as an identity plugin. amnesia can generate an *age*-compatible X25519 identity sealed with questions. When age wants to decrypt data using this identity, it will prompt the user for the required answers to unseal the identity.
+
+To install amnesia as an *age* plugin, create a symlink in your PATH which links `age-plugin-amnesia` to *age*. You can also just clone the binary.
+
+```bash
+ln -s amnesia age-plugin-amnesia
+# OR (not recommended)
+cp amnesia age-plugin-amnesia
+```
+
+To generate an *age*-compatible identity, run:
+
+```bash
+amnesia age-keygen
+```
+
+This will interactively prompt for questions to seal the identity with, and output something like this:
+
+```bash
+# created 2025-07-16T23:55:59+09:00
+# public key: age1enfsyp6vug3l4xt65jysvlpl076xkw4cxup89rmteakfzre8uajqlnya3u
+AGE-PLUGIN-AMNESIA-10V9ZQGPZWEJHYUMFDAHZYW3QYGCJYTQ2YQSZYUM9V9KX2EZLW35K6ETNW3SK6UPZ8GSZYV3SXG6J6VPH95CNV4PJXVAR2DF6X5UJKVPE8GCRQG3VPGSZQGNNDPSHYETNYGAZQKC2YQSZQGRMPGSZQGPQYQSZY6TYYGAZQVPVPGSZQGPQYQSZYUT4V4EHG6T0DC3R5GPZDESK6EFZ9S9ZQGPQYQSZQGNNV9K8GG36YQ3YSN2EF5MKKD6JFATK632FFEFHYVZ3WD4NV5NR2G6NJ5R9DSUN2WT42FT9WAPH2FXKYTMN853ZCZ3QYQSZQGPQYFEKSCTJV53R5GPZ29VNSDF5DA4RVC2HXP4XSJNKG36XX3N5GAZHV5PNXAPRQKNSXEXRXC26V9F8G6TFWFHYU7NTW39YWD2VVAX9Y6TV2YU42S2YW49KYJFSGY7N6GS2YQSZQGRA9S9ZQGPQYPAS5GPQYQSZQGPZD9JZYW3QXYKQ5GPQYQSZQGPZW96K2UM5D9HKUG36YQ3XZEM9YGKQ5GPQYQSZQGPZWDSKCAPZ8GSZYK3EVFJ9V635W9XKYJT8WDYYX6TND4EXKN6RGA28YMJ5VD9YV73HWDU57UM02A2KS6N4VV7JYTQ2YQSZQGPQYQ38X6RPWFJJYW3QYF6KJ6RKW39XVJE5W9SH5S2GDEX5Y3PETPJNVET3VAZ5CJ2Y8P6XCUR4WGHKUJMS2EA926602FZ8S3RXXV69Q43ND46NQMNCD934J3NDX3GN60FZPGSZQGPQ059ZQGZA9S9ZQGPZV4HXXUNEWP6X2EPZ8GSZYW23T9M5XKZX2F68SJECFC45KMMC2434Z6J6W3GYKKR5TQ45S4MYVDC5C3T3G4RXUNN9TFC8J7PCD9C4G7Z5VEQNSVR3TG6KS4MKDDK5WDNGXPHH56M30FFRZ5T62PCY6CTR0P8575P3DUHNSU6VWAHHVU6G23TKVE30FPVJ766P24E95V6JTFDXYNMGV4U8QCMXWEKYVDNG2E2RXVTVF3MXJ3PZPF7SMZA27H
+```
+
+The public key is a "recipient" and can be shared with anyone. You can use it to encrypt data like so:
+
+```bash
+echo "secret" | age -r age1enfsyp6vug3l4xt65jysvlpl076xkw4cxup89rmteakfzre8uajqlnya3u > secret.enc
+```
+
+The long line beginning with `AGE-PLUGIN-AMNESIA-...` is the "identity." This is an encrypted X25519 key which can only be unsealed with sufficient answers to the input questions.
+
+You can decrypt data with the identity like so:
+
+```bash
+age --decrypt -i identity.txt secret.enc
+```
+
+This will interactively prompt for answers via *age*.
+
+> [!IMPORTANT]
+> It is not currently possible to leave an answer blank due to an *age* limitation. You must provide the correct answer to all questions for successful decryption.
+
 ## Cryptography
 
 > [!WARNING]

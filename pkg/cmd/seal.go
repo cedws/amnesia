@@ -41,7 +41,6 @@ func (s *sealCmd) Run(ctx *kong.Context) error {
 	}
 
 	var opts []interactive.Option
-
 	if !s.NoTest {
 		opts = append(opts, interactive.WithTestQuestions())
 	}

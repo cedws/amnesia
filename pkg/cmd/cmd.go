@@ -4,12 +4,14 @@ import (
 	"os"
 
 	"github.com/alecthomas/kong"
+	"github.com/cedws/amnesia/pkg/amnesia/ageplugin"
 	"github.com/charmbracelet/x/term"
 )
 
 type cli struct {
-	Seal   sealCmd   `cmd:""`
-	Unseal unsealCmd `cmd:""`
+	Seal      sealCmd      `cmd:""`
+	Unseal    unsealCmd    `cmd:""`
+	AgeKeygen ageKeygenCmd `cmd:""`
 }
 
 func haveStdin() bool {
@@ -17,6 +19,10 @@ func haveStdin() bool {
 }
 
 func Execute() error {
+	if os.Args[0] == "age-plugin-amnesia" {
+		os.Exit(ageplugin.Main())
+	}
+
 	var cli cli
 
 	ctx := kong.Parse(

@@ -35,7 +35,7 @@ echo "my-master-password" | amnesia seal -f sealed.json -t
 amnesia unseal -f sealed.json
 
 # Unseal to output file
-amnesia unseal -f sealed.json -o secret.json
+amnesia unseal -f sealed.json -o secret
 ```
 
 For strong protection of the secret, enter a good number of difficult questions. An example usage could be to enter your last five passwords as questions.

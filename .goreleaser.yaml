@@ -19,7 +19,7 @@ dockers:
       - "--platform=linux/arm64,linux/amd64"
     image_templates:
       - ghcr.io/cedws/amnesia:latest
-      - ghcr.io/cedws/amnesia:v{{ .Tag }}
+      - ghcr.io/cedws/amnesia:{{ .Tag }}
 
 scoops:
   - name: amnesia

@@ -14,6 +14,21 @@ Upon sealing a secret, the user is asked to provide a set of questions and answe
 
 ## Installation
 
+### Brew
+
+```bash
+brew install cedws/homebrew-tap/amnesia
+```
+
+### Scoop
+
+```powershell
+scoop bucket add cedws https://github.com/cedws/scoop-bucket.git
+scoop install amnesia
+```
+
+### Go
+
 ```bash
 go install github.com/cedws/amnesia@latest
 ```

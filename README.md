@@ -46,7 +46,7 @@ Answers are used verbatim in key-derivation, so be mindful of usage of casing an
 
 amnesia has experimental support for [age](https://github.com/FiloSottile/age) as an identity plugin. amnesia can generate an *age*-compatible X25519 identity sealed with questions. When age wants to decrypt data using this identity, it will prompt the user for the required answers to unseal the identity.
 
-To install amnesia as an *age* plugin, create a symlink in your PATH which links `age-plugin-amnesia` to *age*. You can also just clone the binary.
+To install amnesia as an *age* plugin, create a symlink in your PATH which links `age-plugin-amnesia` to amnesia. You can also just clone the binary.
 
 ```bash
 ln -s amnesia age-plugin-amnesia

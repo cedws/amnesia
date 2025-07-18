@@ -14,6 +14,13 @@ builds:
       - amd64
       - arm64
 
+dockers:
+  - build_flag_templates:
+      - "--platform=linux/arm64,linux/amd64"
+    image_templates:
+      - ghcr.io/cedws/amnesia:latest
+      - ghcr.io/cedws/amnesia:v{{ .Tag }}
+
 scoops:
   - name: amnesia
     repository:

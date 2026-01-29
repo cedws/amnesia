@@ -35,6 +35,10 @@ go install github.com/cedws/amnesia@latest
 
 ## Usage
 
+For strong protection of the secret, enter a good number of difficult questions. An example usage could be to enter your last five passwords as questions.
+
+Answers are used verbatim in key-derivation, so be mindful of usage of casing and punctuation.
+
 ### Sealing a secret
 ```bash
 # Seal a secret, output to stdout
@@ -75,10 +79,6 @@ Opens a sealed secret to a file for editing. Press Ctrl+C to reseal the modified
 ```bash
 amnesia open -f sealed.json -o secret.txt
 ```
-
-For strong protection of the secret, enter a good number of difficult questions. An example usage could be to enter your last five passwords as questions.
-
-Answers are used verbatim in key-derivation, so be mindful of usage of casing and punctuation.
 
 ## age Plugin (experimental)
 

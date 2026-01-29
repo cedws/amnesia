@@ -19,7 +19,7 @@ type resealCmd struct {
 func (r *resealCmd) Help() string {
 	return `Reseal a new secret using an existing sealed file's questions.
 
-This command reads a new secret from stdin and encrypts it using the questions from an existing sealed file. You must provide the correct answers to derive the encryption key.
+This command reads a new secret from stdin and encrypts it using the questions and encryption key from an existing sealed file. You must provide the correct answers to derive the encryption key. The questions, threshold, and key material remain unchanged.
 
 Examples:
   echo "new secret" | amnesia reseal -f sealed.json

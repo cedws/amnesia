@@ -19,10 +19,20 @@ type openCmd struct {
 }
 
 func (o *openCmd) Help() string {
-	return ``
+	return `Open a sealed secret for editing, then reseal it.
+
+This command unseals a secret to a temporary file, waits for you to edit it, then reseals the modified contents when you press Ctrl+C. The sealed file is locked to prevent concurrent access. The secret file is deleted on exit.
+
+Examples:
+  amnesia open -f sealed.json -o secret.txt
+  amnesia open -f ~/.secrets/master.json -o /tmp/master.txt`
 }
 
 func (o *openCmd) Run(ctx *kong.Context) error {
+	if err := o.testSecretFileDeletable(); err != nil {
+		return err
+	}
+
 	lock, err := o.lockSecret()
 	if err != nil {
 		return err
@@ -57,6 +67,20 @@ func (o *openCmd) Run(ctx *kong.Context) error {
 
 	if err := o.reseal(sealed, key); err != nil {
 		return err
+	}
+
+	return nil
+}
+
+func (o *openCmd) testSecretFileDeletable() error {
+	f, err := os.OpenFile(o.SecretFile, os.O_CREATE|os.O_EXCL, 0600)
+	if err != nil {
+		return fmt.Errorf("cannot create secret file: %w", err)
+	}
+	f.Close()
+
+	if err := os.Remove(o.SecretFile); err != nil {
+		return fmt.Errorf("cannot delete secret file: %w", err)
 	}
 
 	return nil

@@ -11,8 +11,8 @@ import (
 )
 
 type sealCmd struct {
-	File   string `help:"File to write sealed secret to." short:"f"`
-	NoTest bool   `help:"Don't prompt for test questions." short:"t"`
+	OutputFile string `help:"File to write sealed secret to." short:"o"`
+	NoTest     bool   `help:"Don't prompt for test questions." short:"t"`
 }
 
 func (s *sealCmd) Help() string {
@@ -22,8 +22,8 @@ This command reads sensitive data from stdin and encrypts it using a set of ques
 
 Examples:
   echo "my secret password" | amnesia seal
-  cat ~/.ssh/id_rsa | amnesia seal -f sealed.json
-  amnesia seal -f sealed.json < large-file.txt`
+  cat ~/.ssh/id_rsa | amnesia seal -o sealed.json
+  amnesia seal -o sealed.json < large-file.txt`
 }
 
 func (s *sealCmd) AfterApply() error {
@@ -55,8 +55,8 @@ func (s *sealCmd) Run(ctx *kong.Context) error {
 		return fmt.Errorf("failed to seal secret: %w", err)
 	}
 
-	if s.File != "" {
-		if err := os.WriteFile(s.File, sealed, 0600); err != nil {
+	if s.OutputFile != "" {
+		if err := os.WriteFile(s.OutputFile, sealed, 0600); err != nil {
 			return err
 		}
 

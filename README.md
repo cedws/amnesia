@@ -37,20 +37,43 @@ go install github.com/cedws/amnesia@latest
 
 ### Sealing a secret
 ```bash
-# Basic usage
-echo "my-master-password" | amnesia seal -f sealed.json
+# Seal a secret, output to stdout
+echo "my-master-password" | amnesia seal
+
+# Seal a secret to a file
+echo "my-master-password" | amnesia seal -o sealed.json
 
 # Seal without test questions
-echo "my-master-password" | amnesia seal -f sealed.json -t
+echo "my-master-password" | amnesia seal -o sealed.json -t
 ```
 
 ### Unsealing a secret
 ```bash
-# Basic usage
+# Unseal a secret, output to stdout
 amnesia unseal -f sealed.json
 
-# Unseal to output file
-amnesia unseal -f sealed.json -o secret
+# Unseal a secret to a file
+amnesia unseal -f sealed.json -o secret.txt
+```
+
+### Resealing a secret
+
+Resealing allows you to replace the encrypted secret in an existing sealed file while keeping the same questions and answers. You must provide the correct answers to derive the encryption key.
+
+```bash
+# Reseal with a new secret, output to stdout
+echo "new-master-password" | amnesia reseal -f sealed.json
+
+# Reseal with a new secret to a file
+echo "new-master-password" | amnesia reseal -f sealed.json -o resealed.json
+```
+
+### Opening a secret for editing
+
+Opens a sealed secret to a file for editing. Press Ctrl+C to reseal the modified contents. The secret file is deleted on exit.
+
+```bash
+amnesia open -f sealed.json -o secret.txt
 ```
 
 For strong protection of the secret, enter a good number of difficult questions. An example usage could be to enter your last five passwords as questions.

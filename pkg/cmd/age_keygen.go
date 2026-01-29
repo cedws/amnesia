@@ -12,7 +12,7 @@ import (
 )
 
 type ageKeygenCmd struct {
-	OutputFile string `help:"Write the result to the file at path STRING." short:"o" name:"output"`
+	OutputFile string `help:"File to write the identity to." short:"o" name:"output"`
 	NoTest     bool   `help:"Don't prompt for test questions." short:"t"`
 }
 

@@ -74,11 +74,52 @@ func Unseal(input []byte, answers Answers) ([]byte, error) {
 	case "1":
 		return unsealV1(sealed, answers)
 	default:
-		return nil, fmt.Errorf("unknown seal version: %s", sealed.Version)
+		return nil, fmt.Errorf("unknown version: %s", sealed.Version)
+	}
+}
+
+func UnsealWithKey(input, key []byte) ([]byte, error) {
+	sealed, err := Decode(input)
+	if err != nil {
+		return nil, err
+	}
+
+	switch sealed.Version {
+	case "1":
+		return unsealV1WithKey(sealed, key)
+	default:
+		return nil, fmt.Errorf("unknown version: %s", sealed.Version)
 	}
 }
 
 func unsealV1(sealedSecret *SealedSecret, answers Answers) ([]byte, error) {
+	dekKey, err := DecryptKey(sealedSecret, answers)
+	if err != nil {
+		return nil, err
+	}
+
+	return unsealV1WithKey(sealedSecret, dekKey)
+}
+
+func unsealV1WithKey(sealedSecret *SealedSecret, key []byte) ([]byte, error) {
+	secret, err := decryptData(sealedSecret.Encrypted, key)
+	if err != nil {
+		return nil, fmt.Errorf("error decrypting data (incorrect or too few answers?)")
+	}
+
+	return secret, nil
+}
+
+func DecryptKey(sealedSecret *SealedSecret, answers Answers) ([]byte, error) {
+	switch sealedSecret.Version {
+	case "1":
+		return decryptKeyV1(sealedSecret, answers)
+	default:
+		return nil, fmt.Errorf("unknown version: %s", sealedSecret.Version)
+	}
+}
+
+func decryptKeyV1(sealedSecret *SealedSecret, answers Answers) ([]byte, error) {
 	var shares [][]byte
 
 	for _, share := range sealedSecret.Shares {
@@ -116,10 +157,5 @@ func unsealV1(sealedSecret *SealedSecret, answers Answers) ([]byte, error) {
 		return nil, fmt.Errorf("error joining shares: %w", err)
 	}
 
-	secret, err := decryptData(sealedSecret.Encrypted, dekKey)
-	if err != nil {
-		return nil, fmt.Errorf("error decrypting data (incorrect or too few answers?)")
-	}
-
-	return secret, nil
+	return dekKey, nil
 }

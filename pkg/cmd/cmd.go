@@ -11,6 +11,8 @@ import (
 type cli struct {
 	Seal      sealCmd      `cmd:""`
 	Unseal    unsealCmd    `cmd:""`
+	Reseal    resealCmd    `cmd:""`
+	Open      openCmd      `cmd:""`
 	AgeKeygen ageKeygenCmd `cmd:""`
 }
 
@@ -18,7 +20,7 @@ func haveStdin() bool {
 	return !term.IsTerminal(uintptr(os.Stdin.Fd()))
 }
 
-func Execute() error {
+func Execute() {
 	if os.Args[0] == "age-plugin-amnesia" {
 		os.Exit(ageplugin.Main())
 	}
@@ -35,5 +37,5 @@ func Execute() error {
 		}),
 	)
 
-	return ctx.Run()
+	ctx.FatalIfErrorf(ctx.Run())
 }

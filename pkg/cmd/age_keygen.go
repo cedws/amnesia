@@ -26,13 +26,18 @@ Examples:
   amnesia age-keygen -o identity.txt`
 }
 
-func (s *ageKeygenCmd) Run(ctx *kong.Context) error {
+func (s *ageKeygenCmd) interactiveOpts() []interactive.Option {
 	var opts []interactive.Option
+
 	if !s.NoTest {
 		opts = append(opts, interactive.WithTestQuestions())
 	}
 
-	identity, err := ageplugin.GenerateIdentity(context.Background(), opts...)
+	return opts
+}
+
+func (s *ageKeygenCmd) Run(ctx *kong.Context) error {
+	identity, err := ageplugin.GenerateIdentity(context.Background(), s.interactiveOpts()...)
 	if err != nil {
 		return err
 	}

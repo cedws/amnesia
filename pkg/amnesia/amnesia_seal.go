@@ -71,6 +71,16 @@ func Seal(
 	return sealV1(secret, questions, threshold)
 }
 
+func ResealWithKey(sealed, secret, key []byte) ([]byte, error) {
+	sealedSecret, err := Decode(sealed)
+	if err != nil {
+		return nil, err
+	}
+	sealedSecret.Encrypted = encryptData(secret, key)
+
+	return Encode(sealedSecret)
+}
+
 func sealV1(
 	secret []byte,
 	questions Questions,

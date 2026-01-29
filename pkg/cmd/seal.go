@@ -34,18 +34,23 @@ func (s *sealCmd) AfterApply() error {
 	return nil
 }
 
+func (s *sealCmd) interactiveOpts() []interactive.Option {
+	var opts []interactive.Option
+
+	if !s.NoTest {
+		opts = append(opts, interactive.WithTestQuestions())
+	}
+
+	return opts
+}
+
 func (s *sealCmd) Run(ctx *kong.Context) error {
 	data, err := io.ReadAll(os.Stdin)
 	if err != nil {
 		return err
 	}
 
-	var opts []interactive.Option
-	if !s.NoTest {
-		opts = append(opts, interactive.WithTestQuestions())
-	}
-
-	sealed, err := interactive.Seal(context.Background(), data, opts...)
+	sealed, err := interactive.Seal(context.Background(), data, s.interactiveOpts()...)
 	if err != nil {
 		return fmt.Errorf("failed to seal secret: %w", err)
 	}

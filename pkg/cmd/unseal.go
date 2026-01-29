@@ -16,7 +16,7 @@ type unsealCmd struct {
 	OutputFile string `help:"File to write unsealed secret to." short:"o"`
 }
 
-func (s *unsealCmd) Help() string {
+func (u *unsealCmd) Help() string {
 	return `Unseal a secret.
 
 This command reconstructs a secret by prompting for answers to the questions that were set during sealing. You must provide the minimum threshold number of correct answers to successfully unseal the secret. The sealed data can be provided via stdin or from a file.
@@ -28,16 +28,16 @@ Examples:
   cat sealed.json | amnesia unseal -o original-file.txt`
 }
 
-func (s *unsealCmd) AfterApply() error {
-	if term.IsTerminal(uintptr(os.Stdin.Fd())) && s.File == "" {
+func (u *unsealCmd) AfterApply() error {
+	if term.IsTerminal(uintptr(os.Stdin.Fd())) && u.File == "" {
 		return fmt.Errorf("file is required when not reading from stdin")
 	}
 
 	return nil
 }
 
-func (s *unsealCmd) Run(ctx *kong.Context) error {
-	input, err := readInput(s)
+func (u *unsealCmd) Run(ctx *kong.Context) error {
+	input, err := readInput(u)
 	if err != nil {
 		return err
 	}
@@ -47,8 +47,8 @@ func (s *unsealCmd) Run(ctx *kong.Context) error {
 		return fmt.Errorf("failed to unseal secret: %w", err)
 	}
 
-	if s.OutputFile != "" {
-		if err := os.WriteFile(s.OutputFile, unsealed, 0600); err != nil {
+	if u.OutputFile != "" {
+		if err := os.WriteFile(u.OutputFile, unsealed, 0600); err != nil {
 			return err
 		}
 

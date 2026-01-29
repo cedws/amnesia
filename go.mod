@@ -7,6 +7,7 @@ require (
 	github.com/alecthomas/kong v1.12.0
 	github.com/charmbracelet/huh v0.7.0
 	github.com/charmbracelet/x/term v0.2.1
+	github.com/gofrs/flock v0.12.1
 	github.com/hashicorp/vault v1.20.0
 	github.com/stretchr/testify v1.10.0
 	golang.org/x/crypto v0.38.0

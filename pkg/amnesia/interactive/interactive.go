@@ -20,6 +20,20 @@ func WithTestQuestions() Option {
 	}
 }
 
+func DecryptKey(ctx context.Context, secret []byte, _ ...Option) ([]byte, error) {
+	sealedSecret, err := amnesia.Decode(secret)
+	if err != nil {
+		return nil, err
+	}
+
+	answers, err := collectAnswers(ctx, sealedSecret)
+	if err != nil {
+		return nil, err
+	}
+
+	return amnesia.DecryptKey(sealedSecret, answers)
+}
+
 func Seal(ctx context.Context, secret []byte, opts ...Option) ([]byte, error) {
 	options := &options{}
 	for _, opt := range opts {
@@ -45,15 +59,43 @@ func Seal(ctx context.Context, secret []byte, opts ...Option) ([]byte, error) {
 	return amnesia.Seal(secret, questions, threshold)
 }
 
-func Unseal(ctx context.Context, sealed []byte, _ ...Option) ([]byte, error) {
-	decoded, err := amnesia.Decode(sealed)
+func Unseal(ctx context.Context, secret []byte, _ ...Option) ([]byte, error) {
+	sealedSecret, err := amnesia.Decode(secret)
 	if err != nil {
 		return nil, err
 	}
 
+	answers, err := collectAnswers(ctx, sealedSecret)
+	if err != nil {
+		return nil, err
+	}
+
+	return amnesia.Unseal(secret, answers)
+}
+
+func Reseal(ctx context.Context, sealed, newSecret []byte, _ ...Option) ([]byte, error) {
+	sealedSecret, err := amnesia.Decode(sealed)
+	if err != nil {
+		return nil, err
+	}
+
+	answers, err := collectAnswers(ctx, sealedSecret)
+	if err != nil {
+		return nil, err
+	}
+
+	key, err := amnesia.DecryptKey(sealedSecret, answers)
+	if err != nil {
+		return nil, err
+	}
+
+	return amnesia.ResealWithKey(sealed, newSecret, key)
+}
+
+func collectAnswers(ctx context.Context, sealedSecret *amnesia.SealedSecret) (amnesia.Answers, error) {
 	answers := amnesia.NewAnswers()
 
-	for _, share := range decoded.Shares {
+	for _, share := range sealedSecret.Shares {
 		answer, err := promptForAnswer(ctx, share.Question)
 		if err != nil {
 			return nil, err
@@ -69,7 +111,7 @@ func Unseal(ctx context.Context, sealed []byte, _ ...Option) ([]byte, error) {
 		answers[share.ID] = answer
 	}
 
-	return amnesia.Unseal(sealed, answers)
+	return answers, nil
 }
 
 func promptForQuestions(ctx context.Context) (amnesia.Questions, error) {

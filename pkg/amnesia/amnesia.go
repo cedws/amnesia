@@ -126,3 +126,7 @@ func Decode(buf []byte) (*SealedSecret, error) {
 
 	return &sf, nil
 }
+
+func Encode(sealedSecret *SealedSecret) ([]byte, error) {
+	return json.Marshal(sealedSecret)
+}

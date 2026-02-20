@@ -14,25 +14,31 @@ builds:
       - amd64
       - arm64
 
-dockers:
-  - build_flag_templates:
-      - "--platform=linux/arm64,linux/amd64"
-    image_templates:
-      - ghcr.io/cedws/amnesia:latest
-      - ghcr.io/cedws/amnesia:{{ .Tag }}
+dockers_v2:
+  - images:
+      - 'ghcr.io/{{ envOrDefault "GITHUB_REPOSITORY_OWNER" "cedws" }}/{{ .ProjectName }}'
+    tags:
+      - "{{ .Tag }}"
+      - "v{{ .Major }}"
+      - "latest"
+    platforms:
+      - linux/amd64
+      - linux/arm64
+    build_args:
+      PROJECT_NAME: "{{ .ProjectName }}"
+    flags:
+      - "--pull"
 
 scoops:
-  - name: amnesia
-    repository:
+  - repository:
       name: scoop-bucket
-      owner: cedws
+      owner: '{{ envOrDefault "GITHUB_REPOSITORY_OWNER" "cedws" }}'
       token: "{{ .Env.SCOOP_BUCKET_PUSH_TOKEN }}"
 
 homebrew_casks:
-  - name: amnesia
-    repository:
+  - repository:
       name: homebrew-tap
-      owner: cedws
+      owner: '{{ envOrDefault "GITHUB_REPOSITORY_OWNER" "cedws" }}'
       token: "{{ .Env.HOMEBREW_TAP_PUSH_TOKEN }}"
     custom_block: |
       binary "amnesia", target: "age-plugin-amnesia"
@@ -40,8 +46,8 @@ homebrew_casks:
       post:
         install: |
           if system_command("/usr/bin/xattr", args: ["-h"]).exit_status == 0
-            system_command "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "#{staged_path}/amnesia"]
+            system_command "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "#{staged_path}/{{ .ProjectName }}"]
           end
 
 changelog:
-  use: github-native
+  use: github

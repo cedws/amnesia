@@ -40,6 +40,8 @@ homebrew_casks:
       name: homebrew-tap
       owner: '{{ envOrDefault "GITHUB_REPOSITORY_OWNER" "cedws" }}'
       token: "{{ .Env.HOMEBREW_TAP_PUSH_TOKEN }}"
+    homepage: "https://github.com/cedws/amnesia"
+    description: "a command-line tool for sealing secrets with a set of questions, with a specified number of answers required to decrypt the secret"
     custom_block: |
       binary "amnesia", target: "age-plugin-amnesia"
     hooks:

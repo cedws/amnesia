@@ -1,4 +1,11 @@
+# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
 version: 2
+
+checksum:
+  name_template: "checksums.txt"
+
+docker_digest:
+  name_template: "digests.txt"
 
 builds:
   - ldflags: "-s -w"
@@ -14,8 +21,20 @@ builds:
       - amd64
       - arm64
 
+docker_signs:
+  - ids:
+      - dockers_v2
+    cmd: cosign
+    args:
+      - "sign"
+      - "--yes"
+      - "${artifact}"
+    env:
+      - COSIGN_YES=true
+
 dockers_v2:
-  - images:
+  - id: dockers_v2
+    images:
       - 'ghcr.io/{{ envOrDefault "GITHUB_REPOSITORY_OWNER" "cedws" }}/{{ .ProjectName }}'
     tags:
       - "{{ .Tag }}"
@@ -30,13 +49,15 @@ dockers_v2:
       - "--pull"
 
 scoops:
-  - repository:
+  - skip_upload: '{{ eq (envOrDefault "REPO_VISIBILITY" "private") "private" }}'
+    repository:
       name: scoop-bucket
       owner: '{{ envOrDefault "GITHUB_REPOSITORY_OWNER" "cedws" }}'
       token: "{{ .Env.SCOOP_BUCKET_PUSH_TOKEN }}"
 
 homebrew_casks:
-  - repository:
+  - skip_upload: '{{ eq (envOrDefault "REPO_VISIBILITY" "private") "private" }}'
+    repository:
       name: homebrew-tap
       owner: '{{ envOrDefault "GITHUB_REPOSITORY_OWNER" "cedws" }}'
       token: "{{ .Env.HOMEBREW_TAP_PUSH_TOKEN }}"
@@ -47,7 +68,7 @@ homebrew_casks:
     hooks:
       post:
         install: |
-          if system_command("/usr/bin/xattr", args: ["-h"]).exit_status == 0
+          if OS.mac?
             system_command "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "#{staged_path}/{{ .ProjectName }}"]
           end
 

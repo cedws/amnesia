@@ -1,6 +1,6 @@
 module github.com/cedws/amnesia
 
-go 1.24.4
+go 1.25.1
 
 require (
 	filippo.io/age v1.2.1-0.20240926110859-2214a556f604
@@ -8,8 +8,8 @@ require (
 	github.com/charmbracelet/huh v0.7.0
 	github.com/charmbracelet/x/term v0.2.1
 	github.com/gofrs/flock v0.12.1
-	github.com/hashicorp/vault v1.20.0
-	github.com/stretchr/testify v1.10.0
+	github.com/hashicorp/vault v1.21.0
+	github.com/stretchr/testify v1.11.1
 	golang.org/x/crypto v0.45.0
 )
 

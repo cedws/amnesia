@@ -3,7 +3,7 @@ module github.com/cedws/amnesia
 go 1.25.1
 
 require (
-	filippo.io/age v1.2.1-0.20240926110859-2214a556f604
+	filippo.io/age v1.2.1
 	github.com/alecthomas/kong v1.12.0
 	github.com/charmbracelet/huh v0.7.0
 	github.com/charmbracelet/x/term v0.2.1

@@ -32,6 +32,7 @@
             "-s"
             "-w"
           ];
+          postInstall = "ln -s $out/bin/{,age-plugin-}amnesia";
           meta = with pkgs.lib; {
             description = "amnesia is a command-line tool for sealing secrets with a set of questions";
             homepage = "https://github.com/cedws/amnesia";
